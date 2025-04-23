@@ -3,19 +3,10 @@ from sqlalchemy import Index, text, VARCHAR
 from sqlalchemy.orm import Mapped, mapped_column
 from typing import Annotated
 import datetime
-from schemas.newbook import BookSchema
-
+from model.basic import Base
 
 """Модель книги"""
 
-
-class Base(DeclarativeBase):
-    def __repr__(self):
-        cols = []
-        for col in self.__table__.columns.keys():
-            cols.append(f"{col}={getattr(self, col)}")
-        return f"<({self.__class__.__name__})>"
-    
 
 timezone = Annotated[datetime.datetime, mapped_column(server_default=text("TIMEZONE('utc', now())"))]
 

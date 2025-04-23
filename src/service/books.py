@@ -12,7 +12,6 @@ class Book_service:
         query = await self.books_repo.add_book(book_dict)
         return query
         
-        
 
     async def return_books(self):
         query = await self.books_repo.return_book()
