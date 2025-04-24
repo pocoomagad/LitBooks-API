@@ -17,5 +17,5 @@ class UserLoginSchemaProfPost(BaseModel):
 
 
 class UserLoginSchema(BaseModel):
-    user_name: str 
-    password: str 
+    user_name: str = Field(min_length=5, max_length=32)
+    password: str = Field(min_length=8)

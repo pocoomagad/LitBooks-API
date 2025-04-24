@@ -92,7 +92,7 @@ class AuthRepository(AbstractAuthRepository):
                 await session.commit()
         except IntegrityError:
             await session.rollback()
-            return {"Name or password already use": "error"}
+            return {"Error":"name or password already use"}
 
 
     async def auth_in(self, user_name: str):

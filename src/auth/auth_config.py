@@ -3,9 +3,9 @@ import hashlib
 from schemas.users import UserLoginSchemaProfPost, UserLoginSchema
 from fastapi import HTTPException, Depends
 
-"""Конфиг авторизации"""
+"""Конфиг ауентификации"""
 
-class AuthConfig_:
+class authconfig:
     config = AuthXConfig(
     JWT_ALGORITHM = "HS256",
     JWT_SECRET_KEY = "admin",
@@ -16,7 +16,6 @@ class AuthConfig_:
 
     @staticmethod
     async def to_hash(
-        self,
         password: str
         ):
         hash_pass = hashlib.new("sha256")
@@ -48,8 +47,9 @@ class AuthConfig_:
 
 
     @classmethod
-    async def verify_access(cls, token: RequestToken = Depends()):
+    async def verify_access(self, token):
         try:
-            cls.security.verify_token(token=token)
+            result = await self.security.verify_token(token=token)
+            return result
         except Exception as e:
-            return False
+            return e
