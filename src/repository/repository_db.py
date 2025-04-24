@@ -107,5 +107,9 @@ class AuthRepository(AbstractAuthRepository):
                 return False
 
 
-    async def protected():
-        pass
+    async def protected(self, user_name: str):
+        async with conn() as session:
+            stmt = select(self.model).where(self.model.user_name==user_name)
+            res = await session.execute(stmt)
+            await session.commit()
+            return res.scalars().all()

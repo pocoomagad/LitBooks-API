@@ -2,16 +2,17 @@ from pydantic import BaseModel, Field, field_validator, EmailStr, computed_field
 
 class UserLoginSchemaGet(BaseModel):
     user_name: str
-    password: str
+    password: str 
     email: EmailStr
 
-    @computed_field
-    def protected_password(self) -> str:
-        return f"{len(self.password) * "*"}"
+    @field_validator('password', mode='after')
+    @classmethod
+    def get_validate(cls, v):
+        return "******"
 
 
 class UserLoginSchemaProfPost(BaseModel):
-    user_name: str  = Field(min_length=5, max_length=32)
+    user_name: str = Field(min_length=5, max_length=32)
     password: str = Field(min_length=8)
     email: EmailStr
 
