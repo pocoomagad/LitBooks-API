@@ -10,8 +10,9 @@ class UserLoginModel(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
 
     user_name: Mapped[str] = mapped_column(unique=True)
-    password: Mapped[str] =mapped_column(unique=True)
+    password: Mapped[str] = mapped_column(unique=True)
     email: Mapped[str] = mapped_column(VARCHAR(64))
+    author: Mapped[bool] 
     
     __table_args__ = (
         Index("hash_password_idx", "password", postgresql_using='hash'),

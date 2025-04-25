@@ -98,10 +98,10 @@ class AuthRepository(AbstractAuthRepository):
     async def auth_in(self, user_name: str):
         async with conn() as session:
             try:
-                stmt = select(self.model.password).where(self.model.user_name==user_name)
+                stmt = select(self.model).where(self.model.user_name==user_name)
                 res = await session.execute(stmt)
                 await session.commit()
-                return res.scalar_one()
+                return res.scalars().all()
             except NoResultFound:
                 await session.rollback()
                 return False

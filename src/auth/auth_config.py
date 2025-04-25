@@ -1,20 +1,13 @@
-from authx import AuthXConfig, AuthX, RequestToken
+from authx import AuthXConfig, AuthX, RequestToken, TokenPayload
 import hashlib
 from schemas.users import UserLoginSchemaProfPost, UserLoginSchema
-from fastapi import Response
+from fastapi import Response, HTTPException
 from abc import ABC, abstractmethod
+from fastapi import Depends
+from functools import wraps
 
 """Конфиг ауентификации"""
 
-# def check_auth(func):
-        # def wrapper(token: RequestToken):
-        #     new_result = authconfig.security.ACCESS_REQUIRED
-        #     try:
-        #         authconfig.security.verify_token(token=token)
-        #         return func()
-        #     except Exception as e:
-        #         return {"Error": "Authorization not access"}
-        # return wrapper
 
 class AbstractConfig(ABC):
     @abstractmethod
@@ -38,7 +31,6 @@ class authconfig:
         self.security = AuthX(config=self.config)
         self.inciliation = self._inciliation()
 
-
     def _inciliation(self):
         self.config.JWT_ALGORITHM = "HS256"
         self.config.JWT_SECRET_KEY = "admin"
@@ -46,6 +38,7 @@ class authconfig:
         self.config.JWT_TOKEN_LOCATION = ["cookies"]
         self.config.JWT_ACCESS_CSRF_COOKIE_NAME = "csrf_name"
         self.config.JWT_ACCESS_COOKIE_PATH = "/profile"
+        self.config.JWT_COOKIE_CSRF_PROTECT = False
     
 
     @staticmethod
@@ -58,13 +51,6 @@ class authconfig:
         pass_ = hash_pass.hexdigest()
         return pass_
     
-
-    async def get_token_from_request_(
-            self
-            ):
-        result = self.security.get_token_from_request()
-        return result
-        
     
     async def create_users(
         self, 
@@ -78,12 +64,15 @@ class authconfig:
 
     async def logining_in_service(
         self, 
-        input_pass: UserLoginSchema, 
+        input_pass: UserLoginSchema,
         creds: str
         ):
-        if await self.to_hash(input_pass.password) == creds:
-            token = self.security.create_access_token(uid=input_pass.user_name)
+        result_creds = list(creds)[1][1]
+        author = list(creds)[3][1]
+        if await self.to_hash(input_pass.password) == result_creds:
+            token = self.security.create_access_token(uid=input_pass.user_name, data={"author": author})
             return token
+        return False
 
 
     async def verify_access(
@@ -91,8 +80,8 @@ class authconfig:
         token
         ):
         try:
-            result = self.security.verify_token(token=token)
+            result = await self.security.verify_token(token=token)
             return result
         except Exception as e:
             return False
-        
+    

@@ -17,7 +17,8 @@ class AuthSerice:
     async def auths_in(self, data: UserLoginSchema):
         login_dict = data.model_dump()
         query = await self.user_repo.auth_in(login_dict.get("user_name"))
-        responce = await self.auth_repo.logining_in_service(data, query)
+        result_creds = [UserLoginSchemaProfPost.model_validate(row, from_attributes=True) for row in query]
+        responce = await self.auth_repo.logining_in_service(data, result_creds[0])
         return responce
 
 
@@ -30,7 +31,3 @@ class AuthSerice:
             return result
         return login_token
     
-
-    async def get_token(self):
-        responce_token = await self.auth_repo.get_token_from_request_()
-        return responce_token

@@ -23,9 +23,9 @@ async def authorisation(
 
 @user_rout.post("/login")
 async def login(
-    input: UserLoginSchema, 
     auth_ser: auth_ser,
-    responce: Response
+    responce: Response,
+    input: UserLoginSchema
                 ):
     user_login = await auth_ser.auths_in(input)
     if not user_login:
@@ -37,7 +37,7 @@ async def login(
 @user_rout.get("", dependencies=[Depends(authconfig().security.get_token_from_request())])
 async def protected(
     auth_ser: auth_ser,
-    token: RequestToken = Depends(),
+    token: RequestToken = Depends()
                     ):
     user_protect = await auth_ser.protecteds(token)
     if not user_protect:
