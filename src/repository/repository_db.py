@@ -34,7 +34,7 @@ class BookRepository(Abstract_Repository):
                     await session.commit()
         except IntegrityError:
             await session.rollback()
-            return {"Error": "isbn most be unique"}
+            return {"Error": "isbn must be unique"}
 
     async def return_book(self):
         async with conn() as session:
@@ -52,7 +52,7 @@ class BookRepository(Abstract_Repository):
                 return res.scalar_one()
         except IntegrityError:
             await session.rollback()
-            return {"Error": "isbn most be unique"}
+            return {"Error": "isbn must be unique"}
         except NoResultFound:
             await session.rollback()
             return False
