@@ -5,9 +5,9 @@ from fastapi import Response, HTTPException
 from abc import ABC, abstractmethod
 from fastapi import Depends
 from functools import wraps
+from typing import Annotated
 
 """Конфиг ауентификации"""
-
 
 class AbstractConfig(ABC):
     @abstractmethod
@@ -73,15 +73,3 @@ class authconfig:
             token = self.security.create_access_token(uid=input_pass.user_name, data={"author": author})
             return token
         return False
-
-
-    async def verify_access(
-        self, 
-        token
-        ):
-        try:
-            result = await self.security.verify_token(token=token)
-            return result
-        except Exception as e:
-            return False
-    

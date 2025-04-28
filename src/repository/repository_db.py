@@ -34,7 +34,7 @@ class BookRepository(Abstract_Repository):
                     await session.commit()
         except IntegrityError:
             await session.rollback()
-            return {"Error": "isbn must be unique"}
+            return "Error : isbn must be unique"
 
     async def return_book(self):
         async with conn() as session:
@@ -52,7 +52,7 @@ class BookRepository(Abstract_Repository):
                 return res.scalar_one()
         except IntegrityError:
             await session.rollback()
-            return {"Error": "isbn must be unique"}
+            return "Error : isbn must be unique"
         except NoResultFound:
             await session.rollback()
             return False
@@ -60,7 +60,7 @@ class BookRepository(Abstract_Repository):
     async def delete_book(self, book_id: int):
         try:
             async with conn() as session:
-                stmt = delete(self.model).where(self.model.id==book_id)
+                stmt = delete(self.model).filter(self.model.id==book_id)
                 await session.execute(stmt)
                 await session.commit()
         except NoResultFound:
@@ -92,13 +92,15 @@ class AuthRepository(AbstractAuthRepository):
                 await session.commit()
         except IntegrityError:
             await session.rollback()
-            return {"Error":"name or password already use"}
+            return "Error : name or password already use"
 
 
     async def auth_in(self, user_name: str):
         async with conn() as session:
             try:
-                stmt = select(self.model).where(self.model.user_name==user_name)
+                stmt = (
+                    select(self.model)
+                    .filter(self.model.user_name==user_name))
                 res = await session.execute(stmt)
                 await session.commit()
                 return res.scalars().all()
@@ -109,7 +111,7 @@ class AuthRepository(AbstractAuthRepository):
 
     async def protected(self, user_name: str):
         async with conn() as session:
-            stmt = select(self.model).where(self.model.user_name==user_name)
+            stmt = select(self.model).filter(self.model.user_name==user_name)
             res = await session.execute(stmt)
             await session.commit()
             return res.scalars().all()

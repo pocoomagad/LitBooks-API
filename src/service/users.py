@@ -17,17 +17,15 @@ class AuthSerice:
     async def auths_in(self, data: UserLoginSchema):
         login_dict = data.model_dump()
         query = await self.user_repo.auth_in(login_dict.get("user_name"))
+        if not query:
+            return False
         result_creds = [UserLoginSchemaProfPost.model_validate(row, from_attributes=True) for row in query]
-        responce = await self.auth_repo.logining_in_service(data, result_creds[0])
-        return responce
+        response = await self.auth_repo.logining_in_service(data, result_creds[0])
+        return response
 
 
     async def protecteds(self, token):
-        login_token = await self.auth_repo.verify_access(token=token)
-        if login_token:
-            user_name = dict(login_token).get("sub")
+            user_name = dict(token).get("sub")
             profile = await self.user_repo.protected(user_name)
             result = [UserLoginSchemaGet.model_validate(row, from_attributes=True) for row in profile]
-            return result
-        return login_token
-    
+            return result    

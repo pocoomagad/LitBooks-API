@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, Response, HTTPException
+from fastapi.responses import JSONResponse, RedirectResponse
 from schemas.users import UserLoginSchemaProfPost, UserLoginSchema
 from web.Depend import auth_service
 from typing import Annotated
 from service.users import AuthSerice
-from db.engines import conn, async_engine
-from authx import RequestToken
+from authx import TokenPayload
 from auth.auth_config import authconfig
 
 user_rout = APIRouter(prefix="/profile", tags=["Users"])
@@ -15,31 +15,31 @@ auth_ser = Annotated[AuthSerice, Depends(auth_service)]
 async def authorisation(
     auth_ser: auth_ser, 
     creds: UserLoginSchemaProfPost
-                        ):
+                        ) -> JSONResponse:
     user_created = await auth_ser.create_users(creds)
     if user_created is not None:
         return user_created
-    return {"User": "created"}
+    return JSONResponse("User created")
 
-@user_rout.post("/login")
+@user_rout.post("/login", response_class=RedirectResponse, status_code=302)
 async def login(
     auth_ser: auth_ser,
-    responce: Response,
+    response: Response,
     input: UserLoginSchema
                 ):
     user_login = await auth_ser.auths_in(input)
     if not user_login:
         raise HTTPException(status_code=401, detail={"Error": "Incorrect username or password"})
-    responce.set_cookie("Authorization_token", user_login)
-    return {"access_token": user_login}
+    response.set_cookie(key="Authorization_token", value=user_login)
+    return "http://127.0.0.1:8000/profile/me"
     
 
-@user_rout.get("", dependencies=[Depends(authconfig().security.get_token_from_request())])
+@user_rout.get("/me")
 async def protected(
     auth_ser: auth_ser,
-    token: RequestToken = Depends()
-                    ):
+    token: TokenPayload = Depends(authconfig().security.access_token_required)
+                    ) -> JSONResponse:
     user_protect = await auth_ser.protecteds(token)
     if not user_protect:
         raise HTTPException(status_code=401, detail={"Error": str(user_protect)})
-    return user_protect 
+    return user_protect

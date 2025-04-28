@@ -1,10 +1,13 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, HTTPException, Depends
 from web.book_router import book_rout
 from web.users_router import user_rout
 from web.db_router import db_rout
-from fastapi import middleware
 from fastapi.middleware.cors import CORSMiddleware
-import uvicorn
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import JSONResponse
+from authx import TokenPayload
+from auth.auth_config import authconfig
+from authx.exceptions import MissingTokenError
 
 app = FastAPI()
 app.add_middleware(
@@ -14,3 +17,51 @@ app.add_middleware(
 app.include_router(book_rout)
 app.include_router(user_rout)
 app.include_router(db_rout)
+
+class AuthorMiddleware(BaseHTTPMiddleware):
+    def __init__(self, app):
+        super().__init__(app)
+        self.access_token = authconfig().security.access_token_required
+
+    async def dispatch(self, request: Request, call_next):
+        if request.url.path == f"/litbooks":
+            try:
+                token_payload: TokenPayload = await self.access_token(request)
+
+                check = getattr(token_payload, "author")
+                if not check:
+                    return JSONResponse(
+                        status_code=401, content="You are not an author"
+                        )
+            except MissingTokenError:
+                return JSONResponse(
+                    status_code=401, content="Please log in"
+                    )
+            
+
+            response = await call_next(request)
+            response.headers["X-Page-Title"] = "LitBooks Page"
+            return response
+        return await call_next(request)
+    
+
+class UserMiddleware(BaseHTTPMiddleware):
+    def __init__(self, app):
+        super().__init__(app)
+        self.auth = authconfig().security.get_access_token_from_request
+
+    async def dispatch(self, request: Request, call_next):
+        if request.url.path == "/profile/me":
+            if not self.auth:
+                return JSONResponse(
+                    status_code=401, content="Please log in"
+                )
+            
+
+            response = await call_next(request)
+            response.headers["X-Page-Title"] = "User Page"
+            return response 
+        return await call_next(request)
+
+app.add_middleware(AuthorMiddleware)
+app.add_middleware(UserMiddleware)
