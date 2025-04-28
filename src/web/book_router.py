@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends, Request
 from fastapi.responses import JSONResponse
-from schemas.newbook import BookSchemaPost, BookSchema
+from schemas.newbook import BookSchemaPost
+from schemas.paginate import Paginate
 from typing import Annotated
 from service.books import Book_service
 from web.Depend import book_service
@@ -11,9 +12,10 @@ book_rout = APIRouter(tags=["Books"])
 
 @book_rout.get("/")
 async def return_books(
-    service: Annotated[Book_service, Depends(book_service)]
+    service: Annotated[Book_service, Depends(book_service)],
+    paginate: Annotated[Paginate, Depends(Paginate)]
     ):
-    returning_res = await service.return_books()
+    returning_res = await service.return_books(paginate)
     return returning_res
     
 @book_rout.post("/litbooks")

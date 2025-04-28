@@ -1,11 +1,8 @@
 from authx import AuthXConfig, AuthX, RequestToken, TokenPayload
 import hashlib
 from schemas.users import UserLoginSchemaProfPost, UserLoginSchema
-from fastapi import Response, HTTPException
 from abc import ABC, abstractmethod
-from fastapi import Depends
-from functools import wraps
-from typing import Annotated
+from datetime import timedelta
 
 """Конфиг ауентификации"""
 
@@ -39,6 +36,7 @@ class authconfig:
         self.config.JWT_ACCESS_CSRF_COOKIE_NAME = "csrf_name"
         self.config.JWT_ACCESS_COOKIE_PATH = "/profile"
         self.config.JWT_COOKIE_CSRF_PROTECT = False
+        self.config.JWT_ACCESS_TOKEN_EXPIRES = timedelta(days=365)
     
 
     @staticmethod

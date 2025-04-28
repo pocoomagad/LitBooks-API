@@ -24,7 +24,7 @@ class AuthorMiddleware(BaseHTTPMiddleware):
         self.access_token = authconfig().security.access_token_required
 
     async def dispatch(self, request: Request, call_next):
-        if request.url.path == f"/litbooks":
+        if request.url.path.find("litbooks"):
             try:
                 token_payload: TokenPayload = await self.access_token(request)
 

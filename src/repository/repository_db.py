@@ -36,9 +36,9 @@ class BookRepository(Abstract_Repository):
             await session.rollback()
             return "Error : isbn must be unique"
 
-    async def return_book(self):
+    async def return_book(self, limit: int, offset: int):
         async with conn() as session:
-            stmt = select(self.model).limit(10)
+            stmt = select(self.model).limit(limit).offset(offset)
             res = await session.execute(stmt)
             await session.commit()
             return res.scalars().all()
@@ -101,7 +101,7 @@ class AuthRepository(AbstractAuthRepository):
             try:
                 stmt = (
                     select(self.model)
-                    .filter(self.model.user_name==user_name)).exists()
+                    .filter(self.model.user_name==user_name))
                 res = await session.execute(stmt)
                 await session.commit()
                 return res.scalars().all()
