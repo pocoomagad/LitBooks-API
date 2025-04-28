@@ -60,9 +60,10 @@ class BookRepository(Abstract_Repository):
     async def delete_book(self, book_id: int):
         try:
             async with conn() as session:
-                stmt = delete(self.model).filter(self.model.id==book_id)
-                await session.execute(stmt)
+                stmt = delete(self.model).filter_by(id=book_id).returning(self.model.id)
+                res = await session.execute(stmt)
                 await session.commit()
+                return res.scalar_one(  )
         except NoResultFound:
                 await session.rollback()
                 return False                
@@ -100,7 +101,7 @@ class AuthRepository(AbstractAuthRepository):
             try:
                 stmt = (
                     select(self.model)
-                    .filter(self.model.user_name==user_name))
+                    .filter(self.model.user_name==user_name)).exists()
                 res = await session.execute(stmt)
                 await session.commit()
                 return res.scalars().all()

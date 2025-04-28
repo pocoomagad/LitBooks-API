@@ -27,5 +27,5 @@ class Book_service:
 
     async def delete_books(self, book_id: int):
         query = await self.books_repo.delete_book(book_id)
-        return {"Book": "deleted"}
+        return query
 
