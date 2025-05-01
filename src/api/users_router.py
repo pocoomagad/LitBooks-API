@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Response, HTTPException
 from fastapi.responses import JSONResponse, RedirectResponse
 from schemas.users import UserLoginSchemaProfPost, UserLoginSchema
-from web.Depend import auth_service
+from api.Depend import auth_service
 from typing import Annotated
 from service.users import AuthSerice
 from authx import TokenPayload

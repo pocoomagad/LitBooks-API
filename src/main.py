@@ -1,11 +1,11 @@
 from fastapi import FastAPI, Request, HTTPException, Depends
-from web.book_router import book_rout
-from web.users_router import user_rout
-from web.db_router import db_rout
+from api.book_router import book_rout
+from api.users_router import user_rout
+from api.db_router import db_rout
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
-from authx import TokenPayload
+from authx import TokenPayload, RequestToken
 from auth.auth_config import authconfig
 from authx.exceptions import MissingTokenError
 
@@ -24,7 +24,7 @@ class AuthorMiddleware(BaseHTTPMiddleware):
         self.access_token = authconfig().security.access_token_required
 
     async def dispatch(self, request: Request, call_next):
-        if request.url.path.find("litbooks"):
+        if "litbooks" in request.url.path:
             try:
                 token_payload: TokenPayload = await self.access_token(request)
 
@@ -48,14 +48,22 @@ class AuthorMiddleware(BaseHTTPMiddleware):
 class UserMiddleware(BaseHTTPMiddleware):
     def __init__(self, app):
         super().__init__(app)
-        self.auth = authconfig().security.get_access_token_from_request
+        self.auth = authconfig().security.access_token_required
+
 
     async def dispatch(self, request: Request, call_next):
         if request.url.path == "/profile/me":
-            if not self.auth:
+            try:
+                token: TokenPayload = await self.auth(request)
+
+                if not self.auth:
+                    return JSONResponse(
+                        status_code=401, content="Please log in"
+                    )
+            except MissingTokenError:
                 return JSONResponse(
-                    status_code=401, content="Please log in"
-                )
+                        status_code=401, content="Please log in"
+                        )
             
 
             response = await call_next(request)

@@ -4,7 +4,7 @@ from schemas.newbook import BookSchemaPost
 from schemas.paginate import Paginate
 from typing import Annotated
 from service.books import Book_service
-from web.Depend import book_service
+from api.Depend import book_service
 
 book_rout = APIRouter(tags=["Books"])
 
