@@ -1,11 +1,14 @@
-from pydantic import BaseModel, Field, field_validator, EmailStr, computed_field
-from typing import Optional
+from schemas.cart import CartSchema
+from pydantic import BaseModel, Field, field_validator, EmailStr, computed_field, ConfigDict
+from typing import Optional, List
 
 class UserLoginSchemaGet(BaseModel):
     user_name: str
     password: str 
     email: EmailStr
     author: bool
+    cart: List[CartSchema] | None
+
 
     @field_validator('password', mode='after')
     @classmethod

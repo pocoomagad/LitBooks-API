@@ -8,6 +8,12 @@ class AuthSerice:
         self.auth_repo: AbstractConfig = auth_repo()
 
 
+    @staticmethod
+    async def get_name(token):
+        user_name = dict(token).get("sub")
+        return user_name
+
+
     async def create_users(self, creds: UserLoginSchemaProfPost):
        pass_dict = await self.auth_repo.create_users(new_user=creds)
        query = await self.user_repo.create_user(pass_dict)
@@ -25,7 +31,7 @@ class AuthSerice:
 
 
     async def protecteds(self, token):
-            user_name = dict(token).get("sub")
+            user_name = await self.get_name(token)
             profile = await self.user_repo.protected(user_name)
             result = [UserLoginSchemaGet.model_validate(row, from_attributes=True) for row in profile]
             return result    

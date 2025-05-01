@@ -1,14 +1,17 @@
 from fastapi import APIRouter, Depends, Response, HTTPException
 from fastapi.responses import JSONResponse, RedirectResponse
 from schemas.users import UserLoginSchemaProfPost, UserLoginSchema
-from api.Depend import auth_service
+from api.Depend import auth_service, user_cart_service
 from typing import Annotated
 from service.users import AuthSerice
+from service.cart import CartService
 from authx import TokenPayload
 from auth.auth_config import authconfig
 
 user_rout = APIRouter(prefix="/profile", tags=["Users"])
 auth_ser = Annotated[AuthSerice, Depends(auth_service)]
+cart_ser = Annotated[CartService, Depends(user_cart_service)]
+
 
 
 @user_rout.post("/create")
@@ -43,3 +46,17 @@ async def protected(
     if not user_protect:
         raise HTTPException(status_code=401, detail={"Error": str(user_protect)})
     return user_protect
+
+
+"""Круд корзины"""
+
+@user_rout.post("/cart")
+async def get_cart_by_id(
+    cart_ser: cart_ser,
+    book_id: int,
+    token: TokenPayload = Depends(authconfig().security.access_token_required)
+    ) -> JSONResponse:
+    user_cart = await cart_ser.add_to_cart(book_id, token)
+    if not user_cart:
+        raise HTTPException(status_code=404, detail={"Error": str(user_cart)})
+    return user_cart

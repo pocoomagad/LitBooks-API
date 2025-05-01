@@ -1,5 +1,6 @@
+from __future__ import annotations
 from sqlalchemy import Index, text, VARCHAR, CheckConstraint
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import Annotated
 from model.basic import Base
 
@@ -13,6 +14,12 @@ class UserLoginModel(Base):
     password: Mapped[str] = mapped_column(unique=True)
     email: Mapped[str] = mapped_column(VARCHAR(64))
     author: Mapped[bool] 
+
+    from model.cart import CartModel
+
+    cart: Mapped[list["CartModel"]] = relationship(
+        back_populates="user"
+        )
     
     __table_args__ = (
         Index("hash_password_idx", "password", postgresql_using='hash'),
