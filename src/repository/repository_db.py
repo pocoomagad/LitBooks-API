@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
 from db.engines import conn
-from sqlalchemy import insert, select, update, delete
+from sqlalchemy import insert, select, update, delete, and_
 from sqlalchemy.orm import subqueryload
 from model.books import BookModel
 from sqlalchemy.exc import IntegrityError, NoResultFound
 from model.users import UserLoginModel
 from model.cart import CartModel
+from typing import Optional
 
 class Abstract_Repository(ABC):
     model = BookModel
@@ -87,13 +88,16 @@ class AbstractAuthRepository(ABC):
         pass
 
 class AuthRepository(AbstractAuthRepository):
-    async def _get_by_user_name(self, user_name):
+
+    @classmethod
+    async def _get_by_user_name(cls, user_name):
         async with conn() as session:
             stmt = (
-                select(self.model.id)
-                .filter(self.model.user_name==user_name))
-            await session.execute(stmt)
+                select(cls.model.id)
+                .filter(cls.model.user_name==user_name))
+            res = await session.execute(stmt)
             await session.commit()
+            return res.scalar()
         
 
     async def create_user(self, values: dict):
@@ -135,6 +139,7 @@ class AuthRepository(AbstractAuthRepository):
 
 class AbstractCartRepository:
     user = UserLoginModel
+    book = BookModel
     model = CartModel
 
     @abstractmethod
@@ -145,18 +150,31 @@ class AbstractCartRepository:
 class CartRepository(AbstractCartRepository):
 
         @classmethod
-        async def _get_by_user_name(cls, user_name):
+        async def _get_by_user_name_and_book_id(cls, user_name, book_id: Optional[int] = None):
             async with conn() as session:
                 stmt = (
                     select(cls.user.id)
-                    .filter(cls.user.user_name==user_name))
+                    .filter(and_(cls.user.user_name==user_name)))
+                found_book = (
+                    select(cls.book.title)
+                    .filter(cls.book.id==book_id)
+                )
                 res = await session.execute(stmt)
-                await session.commit()
-                return res.scalar_one_or_none()
+                found_or_not = await session.execute(found_book)
+                if found_or_not.scalar() is None:
+                    return None
+                try:
+                    await session.commit()
+                    return res.scalar()
+                except IntegrityError:
+                    return False
+
 
         async def add_to_cart(self, book_id, user_name):
             async with conn() as session:
-                user_id = await self._get_by_user_name(user_name)
+                user_id = await self._get_by_user_name_and_book_id(user_name, book_id)
+                if not user_id:
+                    return "Book not found"
                 book = CartModel(
                     book_id=book_id,
                     user_id=user_id

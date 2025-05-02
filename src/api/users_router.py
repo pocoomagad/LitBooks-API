@@ -56,7 +56,8 @@ async def get_cart_by_id(
     book_id: int,
     token: TokenPayload = Depends(authconfig().security.access_token_required)
     ) -> JSONResponse:
-    user_cart = await cart_ser.add_to_cart(book_id, token)
-    if not user_cart:
-        raise HTTPException(status_code=404, detail={"Error": str(user_cart)})
-    return user_cart
+    try:
+        user_cart = await cart_ser.add_to_cart(book_id, token)
+        return user_cart
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail={"Error": str(e)})

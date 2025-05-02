@@ -52,7 +52,7 @@ class UserMiddleware(BaseHTTPMiddleware):
 
 
     async def dispatch(self, request: Request, call_next):
-        if request.url.path == "/profile/me":
+        if request.url.path == "/profile/me" or request.url.path == "/profile/cart":
             try:
                 token: TokenPayload = await self.auth(request)
 

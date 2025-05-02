@@ -13,4 +13,6 @@ class CartService:
     async def add_to_cart(self, book_id, token):
         name = await self.get_name_cart(token)
         query = await self.cart_repo.add_to_cart(book_id, name)
-        return True
+        if query is not None:
+            raise ValueError(query)
+        return "Add into cart"

@@ -7,8 +7,16 @@ from model.basic import Base
 
 """Модель книги"""
 
+"""Если вы используете postgresql"""
+# server_default=text(
+# "TIMEZONE('utc', now())",
+"""Если вы используете sqlite"""
 
-timezone = Annotated[datetime.datetime, mapped_column(server_default=text("TIMEZONE('utc', now())"))]
+timezone = Annotated[datetime.datetime, mapped_column(
+    # server_default=text(
+    # "TIMEZONE('utc', now())"))]
+    default=datetime.datetime.now())]
+
 
 class BookModel(Base):
     __tablename__ = 'books'
