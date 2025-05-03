@@ -3,6 +3,7 @@ import hashlib
 from schemas.users import UserLoginSchemaProfPost, UserLoginSchema
 from abc import ABC, abstractmethod
 from datetime import timedelta
+from exceptions.handlers import *
 
 """Конфиг ауентификации"""
 
@@ -70,4 +71,4 @@ class authconfig:
         if await self.to_hash(input_pass.password) == result_creds:
             token = self.security.create_access_token(uid=input_pass.user_name, data={"author": author})
             return token
-        return False
+        raise PasswordException

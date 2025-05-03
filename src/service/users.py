@@ -23,8 +23,6 @@ class AuthSerice:
     async def auths_in(self, data: UserLoginSchema):
         login_dict = data.model_dump()
         query = await self.user_repo.auth_in(login_dict.get("user_name"))
-        if not query:
-            return False
         result_creds = [UserLoginSchemaProfPost.model_validate(row, from_attributes=True) for row in query]
         response = await self.auth_repo.logining_in_service(data, result_creds[0])
         return response

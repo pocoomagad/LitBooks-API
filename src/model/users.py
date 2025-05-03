@@ -18,7 +18,8 @@ class UserLoginModel(Base):
     from model.cart import CartModel
 
     cart: Mapped[list["CartModel"]] = relationship(
-        back_populates="user"
+        back_populates="user",
+        passive_deletes=True
         )
     
     __table_args__ = (

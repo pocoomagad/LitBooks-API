@@ -12,5 +12,9 @@ class CartService:
 
     async def add_to_cart(self, book_id, token):
         name = await self.get_name_cart(token)
-        query = await self.cart_repo.add_to_cart(book_id, name)
-        return True
+        query = await self.cart_repo.add_to_cart(name, book_id)
+    
+
+    async def delete_from_cart(self, book_id, token):
+        name = await self.get_name_cart(token)
+        query = await self.cart_repo.delete_from_cart(name, book_id)
