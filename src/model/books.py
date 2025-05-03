@@ -1,23 +1,22 @@
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy import Index, text, VARCHAR
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import Annotated
 import datetime
-from schemas.newbook import BookSchema
-
+from model.basic import Base
 
 """Модель книги"""
 
+"""Если вы используете postgresql"""
+# server_default=text(
+# "TIMEZONE('utc', now())",
+"""Если вы используете sqlite"""
 
-class Base(DeclarativeBase):
-    def __repr__(self):
-        cols = []
-        for col in self.__table__.columns.keys():
-            cols.append(f"{col}={getattr(self, col)}")
-        return f"<({self.__class__.__name__})>"
-    
+timezone = Annotated[datetime.datetime, mapped_column(
+    # server_default=text(
+    # "TIMEZONE('utc', now())"))]
+    default=datetime.datetime.now())]
 
-timezone = Annotated[datetime.datetime, mapped_column(server_default=text("TIMEZONE('utc', now())"))]
 
 class BookModel(Base):
     __tablename__ = 'books'
@@ -32,6 +31,14 @@ class BookModel(Base):
     age_limit: Mapped[str] = mapped_column(VARCHAR())
     price: Mapped[int]
     isbn: Mapped[str] = mapped_column(unique=True)
+
+    from model.cart import CartModel
+
+    carts: Mapped[list["CartModel"]] = relationship(
+        back_populates="book",
+        passive_deletes=True,
+        cascade="all ,delete"
+        )
     
     __table_args__ = (
         Index("titles_index", "title"),

@@ -12,10 +12,10 @@ class Book_service:
         query = await self.books_repo.add_book(book_dict)
         return query
         
-        
 
-    async def return_books(self):
-        query = await self.books_repo.return_book()
+    async def return_books(self, paginate):
+        paginate_dict = paginate.model_dump()
+        query = await self.books_repo.return_book(paginate_dict.get("limit"), paginate_dict.get("offset"))
         result_dto = [BookSchema.model_validate(row, from_attributes=True) for row in query]
         return result_dto
     
@@ -28,5 +28,5 @@ class Book_service:
 
     async def delete_books(self, book_id: int):
         query = await self.books_repo.delete_book(book_id)
-        return {"Book": "deleted"}
+        return query
 
