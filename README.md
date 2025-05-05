@@ -1,6 +1,6 @@
 # LitBooks-API
 
-#1. Клонируете репозиторий#1. Clone the repository
+#1. Clone the repository
 
 #2. Install all dependencies from requirements
 
