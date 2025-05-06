@@ -9,45 +9,43 @@ from authx import TokenPayload
 from auth.auth_config import authconfig
 from exceptions.handlers import *
 
-user_rout = APIRouter(prefix="/profile", tags=["Users"])
+user_rout = APIRouter(prefix="/profile")
 auth_ser = Annotated[AuthSerice, Depends(auth_service)]
 cart_ser = Annotated[CartService, Depends(user_cart_service)]
 
 
 
-@user_rout.post("/create")
+@user_rout.post("/create", tags=["Users"])
 async def authorisation(
     auth_ser: auth_ser, 
     creds: UserLoginSchemaProfPost
                         ) -> JSONResponse:
     user_created = await auth_ser.create_users(creds)
-    if user_created is not None:
-        return user_created
     return JSONResponse("User created")
 
-@user_rout.post("/login", response_class=RedirectResponse, status_code=302)
+@user_rout.post("/login", response_class=RedirectResponse, status_code=302, tags=["Users"])
 async def login(
     auth_ser: auth_ser,
     response: Response,
     input: UserLoginSchema
                 ):
-    user_login = await auth_ser.auths_in(input)
+    user_login = await auth_ser.login(input)
     response.set_cookie(key="Authorization_token", value=user_login)
     return "http://127.0.0.1:8000/profile/me"
     
 
-@user_rout.get("/me")
+@user_rout.get("/me", tags=["Users"])
 async def protected(
     auth_ser: auth_ser,
     token: TokenPayload = Depends(authconfig().security.access_token_required)
                     ) -> JSONResponse:
-    user_protect = await auth_ser.protecteds(token)
+    user_protect = await auth_ser.get_profile(token)
     return user_protect
 
 
 """Круд корзины"""
 
-@user_rout.post("/cart")
+@user_rout.post("/cart", tags=["Cart"])
 async def add_into_cart_by_id(
     cart_ser: cart_ser,
     book_id: int,
@@ -57,7 +55,7 @@ async def add_into_cart_by_id(
     return JSONResponse(status_code=200, content="Add into cart")
 
 
-@user_rout.delete("/cart")
+@user_rout.delete("/cart", tags=["Cart"])
 async def delete_from_cart_by_id(
     cart_ser: cart_ser,
     book_id: int,

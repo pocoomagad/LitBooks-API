@@ -1,14 +1,46 @@
 from abc import ABC, abstractmethod
 from db.engines import conn
-from sqlalchemy import insert, select, update, delete, and_, or_
+from sqlalchemy import insert, select, update, delete, and_
 from sqlalchemy.orm import subqueryload
 from model.books import BookModel
 from sqlalchemy.exc import IntegrityError, NoResultFound
-from sqlalchemy.orm.exc import UnmappedInstanceError
 from model.users import UserLoginModel
 from model.cart import CartModel
-from typing import Optional
 from exceptions.handlers import *
+
+
+async def get_book(book_id) -> BookModel:
+    async with conn() as session:
+        stmt = (
+                select(BookModel)
+                .filter(BookModel.id==book_id)
+                )
+        book_obj = await session.execute(stmt)
+        await session.commit()
+        return book_obj.scalars().first()
+
+
+async def get_user(user_name) -> UserLoginModel:
+        async with conn() as session:
+            stmt = (
+                select(UserLoginModel)
+                .filter(UserLoginModel.user_name==user_name)
+                )
+            res = await session.execute(stmt)
+            await session.commit()
+            return res.scalars().first()
+        
+
+async def get_cart(user_id, book_id) -> CartModel:
+    async with conn() as session:
+        stmt = (
+            select(CartModel)
+            .filter(and_(CartModel.user_id==user_id, CartModel.book_id==book_id))
+            )
+        cart_obj = await session.execute(stmt)
+        await session.commit()
+        return cart_obj.scalars().first()
+        
 
 class Abstract_Repository(ABC):
     model = BookModel
@@ -55,6 +87,7 @@ class BookRepository(Abstract_Repository):
                 res = await session.execute(stmt)
                 await session.commit()
                 return res.scalar_one()
+            
         except IntegrityError:
             await session.rollback()
             raise IsbnUniqueException
@@ -65,10 +98,13 @@ class BookRepository(Abstract_Repository):
     async def delete_book(self, book_id: int):
         try:
             async with conn() as session:
-                stmt = delete(self.model).filter_by(id=book_id).returning(self.model.id)
-                res = await session.execute(stmt)
+                book = await get_book(book_id)
+
+                if book is None:
+                    raise NotFoundException
+
+                await session.delete(book)
                 await session.commit()
-                return res.scalar_one()
         except NoResultFound:
                 await session.rollback()
                 raise NotFoundException               
@@ -82,26 +118,14 @@ class AbstractAuthRepository(ABC):
         pass
 
     @abstractmethod
-    async def protected():
+    async def profile():
         pass
 
     @abstractmethod
-    async def auth_in():
+    async def login():
         pass
 
 class AuthRepository(AbstractAuthRepository):
-
-    @classmethod
-    async def _get_by_user_name(cls, user_name):
-        async with conn() as session:
-            stmt = (
-                select(cls.model.id)
-                .filter(cls.model.user_name==user_name))
-            res = await session.execute(stmt)
-            await session.commit()
-            return res.scalar()
-        
-
     async def create_user(self, values: dict):
         try:
             async with conn() as session:
@@ -112,24 +136,26 @@ class AuthRepository(AbstractAuthRepository):
             await session.rollback()
             raise AlreadyInUse
 
-    async def auth_in(self, user_name: str):
+    async def login(self, user_name: str):
         async with conn() as session:
             stmt = (
                 select(self.model)
                 .filter(self.model.user_name==user_name))
             res = await session.execute(stmt)
             try:
-                await session.commit()
-                user_creds = res.scalars().first()
+                user_creds = res.first()
+
                 if user_creds is None:
-                    await session.rollback()
                     raise PasswordException
+                
+                await session.commit()
+                return user_creds
             except NoResultFound:
                 await session.rollback()
                 raise PasswordException
 
 
-    async def protected(self, user_name: str):
+    async def profile(self, user_name: str):
         async with conn() as session:
             stmt = (
                 select(self.model)
@@ -156,56 +182,32 @@ class AbstractCartRepository:
 
 
 class CartRepository(AbstractCartRepository):
-
-        @classmethod
-        async def _get_by_user_name_and_book_id(cls, user_name, book_id: Optional[int] = None):
+    async def add_to_cart(self, user_name, book_id):
             async with conn() as session:
-                stmt = (
-                    select(cls.user.id)
-                    .filter(cls.user.user_name==user_name))
-                found_book = (
-                    select(cls.book.title)
-                    .filter(cls.book.id==book_id)
-                )
-                res = await session.execute(stmt)
-                found_or_not = await session.execute(found_book)
-                if found_or_not.first() is None:
-                    raise NotFoundException
-                try:
-                    await session.commit()
-                    return res.scalar()
-                except IntegrityError:
-                    await session.rollback()
-                    raise NotFoundException
+                user = await get_user(user_name)
 
-
-        async def add_to_cart(self, user_name, book_id):
-            async with conn() as session:
-                user_id = await self._get_by_user_name_and_book_id(user_name, book_id)
-                book = CartModel(
+                cart_obj = self.model(
                     book_id=book_id,
-                    user_id=user_id
+                    user_id=user.id
                     )
-                session.add(book)
+
+                session.add(cart_obj)
                 try:
                     await session.commit()
+
                 except IntegrityError:
                     await session.rollback()
                     raise CartException
 
 
-        async def delete_from_cart(self, user_name, book_id):
-            async with conn() as session:
-                user_id = await self._get_by_user_name_and_book_id(user_name, book_id)
-                stmt = (
-                    select(self.model)
-                    .filter(and_(self.model.user_id==user_id, self.model.book_id==book_id))
-                    )
-                book_obj = await session.execute(stmt)
-                try:
-                    await session.delete(book_obj.scalars().first())
-                
-                    await session.commit()
-                except UnmappedInstanceError:
-                    await session.rollback()
-                    raise NotFoundException
+    async def delete_from_cart(self, user_name, book_id):
+        async with conn() as session:
+            user = await get_user(user_name)
+            cart = await get_cart(user.id, book_id)
+
+            if cart is None:
+                await session.rollback()
+                raise NotFoundException
+            
+            await session.delete(cart)
+            await session.commit()

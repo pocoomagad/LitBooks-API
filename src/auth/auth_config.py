@@ -9,17 +9,12 @@ from exceptions.handlers import *
 
 class AbstractConfig(ABC):
     @abstractmethod
-    async def logining_in_service():
+    async def login():
         raise NotImplementedError
     
 
     @abstractmethod
     async def create_users():
-        raise NotImplementedError
-
-
-    @abstractmethod
-    async def verify_access():
         raise NotImplementedError
 
 
@@ -53,22 +48,23 @@ class authconfig:
     
     async def create_users(
         self, 
-        new_user: UserLoginSchemaProfPost
+        new_user: dict
         ): 
-        data_user = new_user.model_dump()
-        password = await self.to_hash(password=new_user.password)
-        data_user["password"] = password
-        return data_user
+        password = await self.to_hash(
+            password=new_user.get("password")
+            )
+        new_user["password"] = password
+        return new_user
     
 
-    async def logining_in_service(
+    async def login(
         self, 
         input_pass: UserLoginSchema,
-        creds: str
+        pass_: UserLoginSchema
         ):
-        result_creds = list(creds)[1][1]
-        author = list(creds)[3][1]
-        if await self.to_hash(input_pass.password) == result_creds:
-            token = self.security.create_access_token(uid=input_pass.user_name, data={"author": author})
+        if await self.to_hash(input_pass.password) == pass_.password:
+            token = self.security.create_access_token(
+                uid=input_pass.user_name, 
+                data={"author": pass_.author})
             return token
         raise PasswordException
