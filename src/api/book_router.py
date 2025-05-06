@@ -6,7 +6,7 @@ from typing import Annotated
 from service.books import Book_service
 from api.Depend import book_service
 from exceptions.handlers import *
-import logging
+from api.Depend import book_ser, paginate
 
 book_rout = APIRouter(tags=["Books"])
 
@@ -16,7 +16,7 @@ book_rout = APIRouter(tags=["Books"])
 @book_rout.get("/")
 async def return_books(
     service: Annotated[Book_service, Depends(book_service)],
-    paginate: Annotated[Paginate, Depends(Paginate)]
+    paginate: paginate
     ):
     returning_res = await service.return_books(paginate)
     return returning_res
@@ -24,7 +24,7 @@ async def return_books(
 @book_rout.post("/litbooks")
 async def add_book(
     book_id: BookSchemaPost, 
-    service: Annotated[Book_service, Depends(book_service)]
+    service: book_ser
     ) -> JSONResponse:
     book_add = await service.add_books(book_id)
     return JSONResponse(status_code=200, content="Book add")
@@ -34,7 +34,7 @@ async def add_book(
 async def patch_book(
     id: int, 
     update_book: BookSchemaPost, 
-    service: Annotated[Book_service, Depends(book_service)]
+    service: book_ser
     ) -> JSONResponse:
     book_patch = await service.patch_books(id, update_book)
     return JSONResponse(status_code=200, content=f"book has patched; id: {book_patch}")
@@ -43,7 +43,7 @@ async def patch_book(
 @book_rout.delete('/litbooks/{id}')
 async def delete_book(
     id: int,
-    service: Annotated[Book_service, Depends(book_service)],
+    service: book_ser
     ) -> JSONResponse:
     book_deleted = await service.delete_books(book_id=id)
     return JSONResponse(status_code=200, content="Book has been deleted")

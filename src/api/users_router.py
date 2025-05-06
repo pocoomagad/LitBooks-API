@@ -1,18 +1,12 @@
 from fastapi import APIRouter, Depends, Response, HTTPException
 from fastapi.responses import JSONResponse, RedirectResponse
 from schemas.users import UserLoginSchemaProfPost, UserLoginSchema
-from api.Depend import auth_service, user_cart_service
-from typing import Annotated
-from service.users import AuthSerice
-from service.cart import CartService
 from authx import TokenPayload
 from auth.auth_config import authconfig
 from exceptions.handlers import *
+from api.Depend import auth_ser, cart_ser
 
 user_rout = APIRouter(prefix="/profile")
-auth_ser = Annotated[AuthSerice, Depends(auth_service)]
-cart_ser = Annotated[CartService, Depends(user_cart_service)]
-
 
 
 @user_rout.post("/create", tags=["Users"])
