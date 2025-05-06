@@ -6,8 +6,10 @@ from typing import Annotated
 from service.books import Book_service
 from api.Depend import book_service
 from exceptions.handlers import *
+import logging
 
 book_rout = APIRouter(tags=["Books"])
+
 
 """Ручки книжек доступна только "авторам" """
 

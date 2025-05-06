@@ -19,7 +19,7 @@ class UserLoginSchemaGet(BaseModel):
 class UserLoginSchemaProfPost(BaseModel):
     user_name: str = Field(min_length=5, max_length=32)
     password: str = Field(min_length=8)
-    email: EmailStr
+    email: Optional[EmailStr] = None
     author: bool
 
 

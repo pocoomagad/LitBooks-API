@@ -8,9 +8,9 @@ from starlette.responses import JSONResponse
 from authx import TokenPayload, RequestToken
 from auth.auth_config import authconfig
 from authx.exceptions import MissingTokenError
-from exceptions.handlers import *
+from exceptions.handlers import *   
 
-app = FastAPI()
+app = FastAPI(description="This is openapi project by pocoomagad")
 
 @app.exception_handler(NotFoundException)
 async def not_found_exc(request: Request, exc: NotFoundException):
@@ -48,16 +48,9 @@ async def cart_exc(request: Request, exc: CartException):
 async def pass_exc(request: Request, exc: AlreadyInUse):
     return JSONResponse(
         status_code=208,
-        content={"Error": "Password already use"}
+        content={"Error": "Password or username already use"}
     )
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    )
-app.include_router(book_rout)
-app.include_router(user_rout)
-app.include_router(db_rout)
 
 class AuthorMiddleware(BaseHTTPMiddleware):
     def __init__(self, app):
@@ -112,5 +105,16 @@ class UserMiddleware(BaseHTTPMiddleware):
             return response 
         return await call_next(request)
 
+
+app.include_router(book_rout)
+app.include_router(user_rout)
+app.include_router(db_rout)
 app.add_middleware(AuthorMiddleware)
 app.add_middleware(UserMiddleware)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
+    )
